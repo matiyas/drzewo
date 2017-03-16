@@ -6,29 +6,64 @@ from math import cos
 from math import radians
 from random import randint
 
+__author__ = 'Damian Matyjaszek'
 
 class Branch:
-    def __init__(self, a, b, szerokosc, kolor):
-        self.a = a
-        self.b = b
-        self.szerokosc = szerokosc
+    '''Klasa reprezentująca jedną ścieżkę (path) w formacie SVG
+    
+    Atrybuty:
+        start ([float, float]):     Współrzędne początku ścieżki przechowywane w formie 
+                                    dwuelementowej listy.
+        koniec ([float, float]):    Współrzędne końca ścieżki przechowywane w formie 
+                                    dwuelementowej listy.
+        kolor ([int, int, int]):    Kolor ścieżki w formacie RGB, przechowywany w formie
+                                    tablicy, której elementy odpowiadają kolejno za barwę:
+                                    czerwoną, zieloną, oraz niebieską.
+        grubosc (float):            Grubość ścieżki.
+        '''
+    def __init__(self, start, koniec, grubosc, kolor):
+        '''Konstruktor klasy Branch
+        
+        Tworzy nowy obiekt klasy branch.
+        '''
+        self.start = start
+        self.koniec = koniec
+        self.grubosc = grubosc
         self.kolor = kolor
         
     def __str__(self):
-        return ('<path d="M{} {} L{} {}" stroke-width="{}" '
+        '''Reprezentacja klasy w formacie SVG
+        
+        Metoda zwraca tekst będący ścieżką w formacie SVG, z początkiem w punkcie
+        wskazywanym przez atrybut 'start' i końcem przez 'koniec'. Ścieżka ma grubość
+        odpowiadającą wartości atrybutu 'grubosc', oraz kolor w formacie RGB za który
+        odpowiada atrybut 'kolor'.
+        ''' 
+        return ('    <path d="M{} {} L{} {}" stroke-width="{}" '
                 'stroke="rgb({}, {}, {})"/>\n').format(
-                    self.a[0], self.a[1], self.b[0], self.b[1], self.szerokosc,
-                    self.kolor[0], self.kolor[1], self.kolor[2])
+                    self.start[0], self.start[1], self.koniec[0], self.koniec[1], 
+                    self.grubosc, self.kolor[0], self.kolor[1], self.kolor[2])
                              
                             
-                             
+                            
 def generuj_fraktal(dlugosc, kat, poziomy):
+    '''Funkcja generująca fraktal, będący drzewem
+    
+    
+    Funkcja zwraca listę gałęzi, wraz z pniem, stanowiącą drzewo.
+    
+    
+    Argumenty:
+        dlugosc (float):    Długość pnia drzewa.
+        kat (float):        Początkowy kąt nachylenia gałęzi.
+        poziomy (int):      Liczba poziomów gałęzi.
+    '''
     kat = radians(-kat)
     grubosc = 35
     kolor = [100, 60, 0]
-    a = [400, 800]
-    b = [a[0], a[1]-dlugosc]
-    fraktal = galezie = [Branch(a, b, grubosc, kolor)]
+    start = [400, 800]
+    koniec = [start[0], start[1]-dlugosc]
+    fraktal = galezie = [Branch(start, koniec, grubosc, kolor)]
     
     for poziom in range(poziomy):
         dlugosc *= (2.0)/(3.0)
@@ -37,14 +72,14 @@ def generuj_fraktal(dlugosc, kat, poziomy):
         nowe = []
         
         for galaz in galezie:
-            x = galaz.b[0] + dlugosc * cos(kat)
-            y = galaz.b[1] + dlugosc * sin(kat)
+            x = galaz.koniec[0] + dlugosc * cos(kat)
+            y = galaz.koniec[1] + dlugosc * sin(kat)
         
-            nowe.append(Branch(galaz.b, [x, y], grubosc, kolor))
-            nowe.append(Branch(galaz.b, [galaz.b[0], y], grubosc, kolor))
-            nowe.append(Branch(galaz.b, [-x + 2*galaz.b[0], y], grubosc, kolor))
-                    
-            #kat = kat + randint(-1, 1) * randint(1, 10)
+            nowe += [Branch(galaz.koniec, [x, y], grubosc, kolor),
+                     Branch(galaz.koniec, [galaz.koniec[0], y], grubosc, kolor),
+                     Branch(galaz.koniec, [-x + 2*galaz.koniec[0], y], grubosc, kolor)]
+        
+            kat += randint(-1, 1) * randint(1, 360)
                     
         fraktal += nowe
         galezie = nowe
@@ -64,4 +99,4 @@ def to_svg(galezie):
 
 
 with open('drzewo.svg', 'w') as svg:
-    svg.write(to_svg(generuj_fraktal(200, 30, 2)))
+    svg.write(to_svg(generuj_fraktal(200, 30, 9)))
