@@ -7,6 +7,7 @@ from math import radians
 from random import randint
 
 __author__ = 'Damian Matyjaszek'
+s = 30
 
 class Branch:
     '''Klasa reprezentująca jedną ścieżkę (path) w formacie SVG
@@ -46,57 +47,66 @@ class Branch:
                              
                             
                             
-def generuj_fraktal(dlugosc, kat, poziomy):
+def gen_fraktal(dlugosc, kat, poziomy):
     '''Funkcja generująca fraktal, będący drzewem
-    
-    
-    Funkcja zwraca listę gałęzi, wraz z pniem, stanowiącą drzewo.
     
     
     Argumenty:
         dlugosc (float):    Długość pnia drzewa.
         kat (float):        Początkowy kąt nachylenia gałęzi.
         poziomy (int):      Liczba poziomów gałęzi.
+    
+    Funkcja zwraca listę gałęzi, stanowiących drzewo.
+    
+    Drzewo składa się z pnia o długości 'dlugosc' znajdującego się na poziomie 0, oraz 
+    gałęzi "wyrastających" po 3 z każdego końca każdej gałęzi, o grubości wynoszącej 
+    2/3 + 1 grubości gałęzi poprzedzającej, o ograniczonym, względem poprzedzającej 
+    gałęzi, nachyleniu. Wraz z każdym kolejnym poziomem zielona barwa gałęzi zostaje 
+    zwiększona o 6.
     '''
-    kat = radians(-kat)
-    grubosc = 35
+    grubosc = dlugosc / 5
     kolor = [100, 60, 0]
-    start = [400, 800]
-    koniec = [start[0], start[1]-dlugosc]
-    fraktal = galezie = [Branch(start, koniec, grubosc, kolor)]
+    
+    fraktal = galezie = [Branch([500.0, 1000.0], [500.0, 1000.0-dlugosc], grubosc, kolor)]
     
     for poziom in range(poziomy):
         dlugosc *= (2.0)/(3.0)
         grubosc = grubosc * (2.0/3.0) + 1
         kolor = [kolor[0], kolor[1] + 6, kolor[2]]
-        nowe = []
-        
+        nowe = []       # Lista przechowująca gałęzie dla nowego poziomu
         for galaz in galezie:
-            x = galaz.koniec[0] + dlugosc * cos(kat)
-            y = galaz.koniec[1] + dlugosc * sin(kat)
+            # Obrót
+            alfa = kat + randint(-1, 1) * randint(1, s)
+            x = galaz.koniec[0] + dlugosc * cos(radians(-alfa))
+            y = galaz.koniec[1] + dlugosc * sin(radians(-alfa))
         
             nowe += [Branch(galaz.koniec, [x, y], grubosc, kolor),
                      Branch(galaz.koniec, [galaz.koniec[0], y], grubosc, kolor),
                      Branch(galaz.koniec, [-x + 2*galaz.koniec[0], y], grubosc, kolor)]
-        
-            kat += randint(-1, 1) * randint(1, 360)
                     
-        fraktal += nowe
-        galezie = nowe
+        fraktal += nowe     # Przechowuje wszystkie gałęzie
+        galezie = nowe      # Przechowuje gałęzie ostatniego poziomu
         
     return fraktal
                                          
  
-                                            
-def to_svg(galezie):
-    content = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">\n'
+  
+def gen_svg(galezie, nazwa):
+    '''Funkcja generująca plik SVG
     
-    for galaz in galezie:
-        content += str(galaz)
-        
-    return content + '</svg>'
+    Argumenty:
+        galezie ([Branch, ...]):    Lista obiektów klasy Branch.
+        nazwa (str):                Nazwa generowanego pliku.
+       
+    Funkcja tworzy plik o nazwie 'nazwa', z rozszerzeniem .svg, do którego zapisywana jest
+    tekstowa reprezentacja elementów listy, składającej się z obiektów klasy Branch.
+    '''
+    with open(nazwa + '.svg', 'w') as plik:
+        plik.write('<svg xmlns="http://www.w3.org/2000/svg" version="1.1">\n')
+        for galaz in map(str, galezie):
+            plik.write(galaz)
+        plik.write('</svg>')
     
-
-
-with open('drzewo.svg', 'w') as svg:
-    svg.write(to_svg(generuj_fraktal(200, 30, 9)))
+    
+    
+gen_svg(gen_fraktal(300, 30, 9), 'drzewo')
